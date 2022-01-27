@@ -15,7 +15,7 @@ const FeatureList: FeatureItem[] = [
     title: 'Steam',
     image: '/img/icon_steam.svg',
     description: '只要好玩就玩🎮\n黄油仓库(不是)',
-    href: 'http://steamcommunity.com/profiles/76561198239304782/'
+    href: 'http://steamcommunity.com/profiles/76561198239304782/',
   },
   {
     title: 'bilibili',
@@ -34,11 +34,13 @@ const FeatureList: FeatureItem[] = [
 function Feature({ title, image, description, href }: FeatureItem) {
   return (
     <div className={clsx('col col--4 text--center')}>
-      <div
+      <a
         className={clsx(
-          'text--break card shadow--md avatar avatar--vertical padding--lg',
+          'text--break button button--outline button--secondary shadow--md avatar avatar--vertical padding--lg',
           styles.feature
         )}
+        href={href}
+        target='_blank'
       >
         <img
           className={clsx('avatar__photo avatar__photo--xl', styles.featureSvg)}
@@ -46,13 +48,12 @@ function Feature({ title, image, description, href }: FeatureItem) {
           src={image}
         />
         <div className='avatar__intro'>
-          <a className='avatar__name' href={href}>{title}</a>
+          <a className='avatar__name' href={href}>
+            {title}
+          </a>
           <h5 className='avatar__subtitle'>{description}</h5>
-          {/* <a className='avatar__subtitle' href={href} target="_blank">
-            前往
-          </a> */}
         </div>
-      </div>
+      </a>
     </div>
   );
 }
