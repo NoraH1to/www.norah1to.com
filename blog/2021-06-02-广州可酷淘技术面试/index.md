@@ -47,7 +47,7 @@ tags:
  
  Parent p = new Child();
  p.do();
- => 'child do sth'
+ // => 'child do sth'
  ```
 
  <br/>
