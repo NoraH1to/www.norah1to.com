@@ -68,7 +68,7 @@ const config = {
           //   label: 'Tutorial',
           // },
           { to: '/blog', label: '博客', position: 'left' },
-          { to: '/blog/tags', label: '文章标签', position: 'left' },
+          { to: '/blog/tags', label: '标签', position: 'left' },
           // {
           //   href: 'https://github.com/facebook/docusaurus',
           //   label: 'GitHub',
