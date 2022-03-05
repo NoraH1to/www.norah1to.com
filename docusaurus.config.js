@@ -1,4 +1,4 @@
-// @ts-check
+// @ts-nocheck
 // Note: type annotations allow type checking and IDEs autocompletion
 
 const lightCodeTheme = require('prism-react-renderer/themes/github');
@@ -63,13 +63,13 @@ const config = {
         //   src: 'https://github.com/SterbenJ.png',
         // },
         items: [
-          // {
-          //   type: 'doc',
-          //   docId: 'intro',
-          //   position: 'left',
-          //   label: 'Tutorial',
-          // },
-          { to: '/blog', label: '博客', position: 'left' },
+          {
+            type: 'doc',
+            docId: 'index',
+            position: 'left',
+            label: '博客',
+          },
+          { to: '/blog', label: '胡言乱语', position: 'left' },
           { to: '/blog/tags', label: '标签', position: 'left' },
           // {
           //   href: 'https://github.com/facebook/docusaurus',
