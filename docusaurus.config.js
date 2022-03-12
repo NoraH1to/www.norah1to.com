@@ -64,13 +64,33 @@ const config = {
         // },
         items: [
           {
-            type: 'doc',
-            docId: 'index',
+            type: 'dropdown',
+            label: '文章',
             position: 'left',
-            label: '博客',
+            items: [
+              {
+                type: 'doc',
+                docId: 'index',
+                label: '博客',
+              },
+              { to: '/blog', label: '胡言乱语' },
+            ],
           },
-          { to: '/blog', label: '胡言乱语', position: 'left' },
-          { to: '/blog/tags', label: '标签', position: 'left' },
+          {
+            type: 'dropdown',
+            label: '标签',
+            position: 'left',
+            items: [
+              {
+                label: '博客',
+                to: '/docs/tags',
+              },
+              {
+                label: '胡言乱语',
+                to: '/blog/tags',
+              },
+            ],
+          },
           // {
           //   href: 'https://github.com/facebook/docusaurus',
           //   label: 'GitHub',

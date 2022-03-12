@@ -48,7 +48,7 @@ function Feature({ title, image, description, href }: FeatureItem) {
           src={image}
         />
         <div className='avatar__intro'>
-          <a className='avatar__name' href={href}>
+          <a className='avatar__name' href={href} target='_blank'>
             {title}
           </a>
           <h5 className='avatar__subtitle'>{description}</h5>
