@@ -7,7 +7,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'NoraH1to の 乱炖锅',
-  tagline: '施工中🚧',
+  tagline: '如果快乐太难，那我祝你平安。',
   url: 'https://www.norah1to.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
