@@ -1,4 +1,6 @@
 ---
+title: 简介
+sidebar_label: 简介
 sidebar_position: 1
 ---
 
@@ -8,3 +10,4 @@ sidebar_position: 1
 
 - **LeetCode题解**
 - **面经**
+- 个人摸索的搬砖提效技巧
