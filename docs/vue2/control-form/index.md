@@ -8,6 +8,8 @@ tags:
   - 封装
 ---
 
+# 受控表单
+
 ## 发生甚么事了
 
 最近在掘金摸鱼时，遇到了好几篇关于在 `vue2` 中封装表单的文章，什么提效 `200%` 叭叭叭的说的天花乱坠
@@ -40,7 +42,9 @@ tags:
 
 首先整一个简单的表单出来
 
-```html title="FormControl.vue"
+```html title="components/FormControl/index.vue"
+<!-- components/FormControl/index.vue -->
+
 <template>
   <el-form ref="form" :model="formData" label-width="80px">
     <el-form-item label="姓名" prop="name">
@@ -89,7 +93,9 @@ tags:
 
 在外部既可以使用 `v-mode` 也可以使用 `.sync` 修饰符
 
-```javascript title="FormControl.vue - script" {2-5}
+```javascript title="components/FormControl/index.vue - script" {4-7}
+// components/FormControl/index.vue - script
+
 export default {
   model: {
     prop: 'data',
@@ -103,7 +109,9 @@ export default {
 
 首先需要接收一个外部的值 `data`
 
-```javascript title="FormControl.vue - script" {3-9}
+```javascript title="components/FormControl/index.vue - script" {5-11}
+// components/FormControl/index.vue - script
+
 export default {
   ...
   props: {
@@ -123,7 +131,9 @@ export default {
 
 所以需要立即把 `data` 的值更新到 `formData` 中，即 `immediate: true`
 
-```javascript title="FormControl.vue - script" {8-18}
+```javascript title="components/FormControl/index.vue - script" {10-20}
+// components/FormControl/index.vue - script
+
 export default {
   ...
   data() {
@@ -151,7 +161,9 @@ export default {
 
 因为初始值是外部决定的，所以无需设置 `immediate`
 
-```javascript title="FormControl.vue - script" {10-19}
+```javascript title="components/FormControl/index.vue - script" {12-21}
+// components/FormControl/index.vue - script
+
 export default {
   ...
   data() {
@@ -177,7 +189,9 @@ export default {
 
 ### 完整组件代码
 
-```html title="FormControl.vue"
+```html title="components/FormControl/index.vue"
+<!-- components/FormControl/index.vue -->
+
 <template>
   <el-form ref="form" :model="formData" label-width="80px">
     <el-form-item label="姓名" prop="name">
@@ -241,7 +255,9 @@ export default {
 
 直接在页面中引用
 
-```html title="Home.vue"
+```html title="index.vue"
+<!-- index.vue -->
+
 <template>
   <form-control v-model="formData" />
 </template>
@@ -273,7 +289,9 @@ export default {
 
 简单分析下 `script` 标签中的代码，可以很简单的发现，除了 `formData` 里的数据结构，其它都是能复用的部分，于是可以这样封装一个 `mixin`
 
-```javascript title="control.js"
+```javascript title="components/FormControl/mixins/control.js"
+// components/FormControl/mixins/control.js
+
 /**
  * control
  * @param {Record} model
@@ -338,7 +356,9 @@ export default control;
 
 加上混入后`script` 标签中的内容简化至 4 行
 
-```html title="FormControl.vue" {3-6}
+```html title="components/FormControl/index.vue" {5-8}
+<!-- components/FormControl/index.vue -->
+
 ...
 <script>
   import control from './mixins/control';
@@ -350,7 +370,9 @@ export default control;
 
 ### 最终结果，全部代码
 
-```html title="Home.vue 使用表单组件"
+```html title="index.vue"
+<!-- index.vue -->
+
 <template>
   <form-control v-model="formData" />
 </template>
@@ -374,7 +396,9 @@ export default control;
 </script>
 ```
 
-```html title="FormControl.vue 消费表单数据的表单组件"
+```html title="components/FormControl/index.vue"
+<!-- components/FormControl/index.vue -->
+
 <template>
   <el-form ref="form" :model="formData" label-width="80px">
     <el-form-item label="姓名" prop="name">
@@ -398,7 +422,9 @@ export default control;
 </script>
 ```
 
-```javascript title="control.js 混入"
+```javascript title="components/FormControl/mixins/control.js 混入"
+// components/FormControl/mixins/control.js 混入
+
 /**
  * control
  * @param {Record} model
