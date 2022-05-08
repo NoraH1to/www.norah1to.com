@@ -10,6 +10,7 @@
   height: 100%;
   border: none !important;
   white-space: break-spaces;
+  display: flex;
 }
 
 .featureSvg {
