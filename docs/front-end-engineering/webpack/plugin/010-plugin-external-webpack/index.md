@@ -8,6 +8,8 @@ tags:
   - webpack插件
 ---
 
+> 本文参考了：[超硬核｜带你畅游在 Webpack 插件开发者的世界](https://juejin.cn/post/7047777251949019173)
+
 ## 需求
 
 有时候我们需要从 `CDN` 而不是代码中引入依赖，`webpack` 提供了 [`external`](https://webpack.docschina.org/configuration/externals/) 字段供我们配置
@@ -226,7 +228,8 @@ export default ExternalsWebpackPlugin;
     <!-- 成功注入了 -->
     <script
       defer="defer"
-      src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+      src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"
+    ></script>
     <script defer="defer" src="index.bundle.a04e601c.js"></script>
     <link href="index.a7c1f53f.css" rel="stylesheet" />
   </head>
@@ -234,5 +237,4 @@ export default ExternalsWebpackPlugin;
     <div id="app"></div>
   </body>
 </html>
-
 ```
