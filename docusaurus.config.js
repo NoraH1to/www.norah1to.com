@@ -82,39 +82,48 @@ const config = {
         //   src: 'https://github.com/SterbenJ.png',
         // },
         items: [
-          {
-            type: 'dropdown',
-            label: '文章',
-            position: 'left',
-            items: [
-              {
-                type: 'doc',
-                docId: 'index',
-                label: '博客',
-              },
-              { to: '/blog', label: '胡言乱语' },
-            ],
-          },
-          {
-            type: 'dropdown',
-            label: '标签',
-            position: 'left',
-            items: [
-              {
-                label: '博客',
-                to: '/docs/tags',
-              },
-              {
-                label: '胡言乱语',
-                to: '/blog/tags',
-              },
-            ],
-          },
           // {
-          //   href: 'https://github.com/facebook/docusaurus',
-          //   label: 'GitHub',
-          //   position: 'right',
+          //   type: 'dropdown',
+          //   label: '文章',
+          //   position: 'left',
+          //   items: [
+          //     {
+          //       type: 'doc',
+          //       docId: 'index',
+          //       label: '博客',
+          //     },
+          //     { to: '/blog', label: '胡言乱语' },
+          //   ],
           // },
+          // {
+          //   type: 'dropdown',
+          //   label: '标签',
+          //   position: 'left',
+          //   items: [
+          //     {
+          //       label: '博客',
+          //       to: '/docs/tags',
+          //     },
+          //     {
+          //       label: '胡言乱语',
+          //       to: '/blog/tags',
+          //     },
+          //   ],
+          // },
+          {
+            type: 'doc',
+            docId: 'index',
+            label: '文章',
+          },
+          {
+            label: '索引',
+            to: '/docs/tags',
+          },
+          {
+            href: 'https://github.com/NoraH1to/www.norah1to.com',
+            label: '博客仓库',
+            position: 'right',
+          },
         ],
       },
       footer: {
