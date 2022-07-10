@@ -37,6 +37,8 @@ export function reactive(target: object) {
 
 **否**则创建一个响应式对象返回
 
+`createReactiveObject` 是创建响应式对象的工厂方法，是该文件的核心
+
 ## createReactiveObject
 
 接着再到创建响应式对象这个方法
@@ -141,7 +143,156 @@ proxyMap.set(target, proxy);
 return proxy;
 ```
 
-## getTargetType
+## 其它公开的 api
+
+一些对外公开但是实现与 `reactive` 类同或者过于简单的 api
+
+### shallowReactive
+
+也是用 `createReactiveObject` 工厂方法构建的：
+
+```typescript
+export function shallowReactive<T extends object>(
+  target: T
+): ShallowReactive<T> {
+  return createReactiveObject(
+    target,
+    false,
+    shallowReactiveHandlers,
+    shallowCollectionHandlers,
+    shallowReactiveMap
+  );
+}
+```
+
+`Handlers` 传入的有所不同，`proxyMap` 也不同
+
+### readonly
+
+同上：
+
+```typescript
+export function readonly<T extends object>(
+  target: T
+): DeepReadonly<UnwrapNestedRefs<T>> {
+  return createReactiveObject(
+    target,
+    true,
+    readonlyHandlers,
+    readonlyCollectionHandlers,
+    readonlyMap
+  );
+}
+```
+
+构建时 `isReadonly` 传了 `true`
+
+### shallowReadonly
+
+同上：
+
+```typescript
+export function shallowReadonly<T extends object>(target: T): Readonly<T> {
+  return createReactiveObject(
+    target,
+    true,
+    shallowReadonlyHandlers,
+    shallowReadonlyCollectionHandlers,
+    shallowReadonlyMap
+  );
+}
+```
+
+### isReactive
+
+用于判断是否为响应式的对象，文档中有提到：
+
+> 如果该代理是 `readonly` 创建的，但包裹了由 `reactive` 创建的另一个代理，它也会返回 `true`。
+
+看看源码：
+
+```typescript
+export function isReactive(value: unknown): boolean {
+  if (isReadonly(value)) {
+    return isReactive((value as Target)[ReactiveFlags.RAW]);
+  }
+  return !!(value && (value as Target)[ReactiveFlags.IS_REACTIVE]);
+}
+```
+
+在判断为只读后，会获得其 `RAW` 即原始对象，判断其原始对象是不是响应式的；
+
+例如：
+
+```typescript
+const objReact = reactive({ value: 0 });
+const objReadonly = readonly(objReact);
+isReactive(objReadonly); // true
+```
+
+`isReactive` 中获得到的 `RAW` 就是 `objReact`，返回的也自然是 `true` 了
+
+### isReadonly
+
+判断是否只读
+
+```typescript
+export function isReadonly(value: unknown): boolean {
+  return !!(value && (value as Target)[ReactiveFlags.IS_READONLY]);
+}
+```
+
+没啥好说的，判断 `IS_READONLY` 标记位
+
+### isShallow
+
+判断是否浅层响应
+
+实现同上
+
+### isProxy
+
+判断是否为响应式系统中的对象
+
+直接返回 `isReactive` 与 `isReadonly` 的结果的或运算
+
+### toRaw
+
+递归调用获得其原始对象，用于处理例如 [`isReactive`](#isReactive) 中的情况
+
+```typescript
+export function toRaw<T>(observed: T): T {
+  const raw = observed && (observed as Target)[ReactiveFlags.RAW];
+  return raw ? toRaw(raw) : observed;
+}
+```
+
+获得目标 `RAW` 标记位的值；
+
+如果为空，则返回目标本身；
+
+不为空则使用 `RAW` 的值递归调用
+
+### markRaw
+
+标记一个响应式对象永远返回原始值，并且不再为响应式
+
+```typescript
+export function markRaw<T extends object>(
+  value: T
+): T & { [RawSymbol]?: true } {
+  def(value, ReactiveFlags.SKIP, true);
+  return value;
+}
+```
+
+使用工具方法，标记 `SKIP` 为 `true`
+
+## 其它内部方法
+
+简单说下较重要的实现
+
+### getTargetType
 
 用于获取对象的类型
 
@@ -158,7 +309,7 @@ function getTargetType(value: Target) {
 `toRawType` 方法简单说下：  
 通过 `Object().toString.call(obj)` 获得类似 `"[object Foo]"` 的字符串，然后截取 `"Foo"` 返回
 
-## targetTypeMap
+### targetTypeMap
 
 从这个方法可以知道 vue 能转换哪些对象为响应式对象
 
@@ -181,4 +332,4 @@ function targetTypeMap(rawType: string) {
 
 这些类型分为两大类，`COMMON` 和 `COLLECTION`，**最基础的能直接访问的**数据结构和**需要用迭代器、函数来访问的**数据结构
 
-vue 中监听这两种对象的实现有所不同，后面再说
+vue 中监听这两种对象的监听器实现有所不同
