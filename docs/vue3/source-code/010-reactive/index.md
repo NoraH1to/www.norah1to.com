@@ -62,7 +62,7 @@ if (!isObject(target)) {
 
 ### 响应式系统处理是否处理过
 
-如果 **`RAW` 不为空且是只读或响应式的对象**，直接返回其本身
+如果 **`RAW` 不为空且调用方法相同**，直接返回其本身
 
 ```typescript
 // target is already a Proxy, return it.
@@ -75,11 +75,26 @@ if (
 }
 ```
 
-下面这段代码用于判断是**只读或响应式**的对象
+下面这段代码用于判断是**调用方法是否相同**
 
 ```typescript
 !(isReadonly && target[ReactiveFlags.IS_REACTIVE]);
 ```
+
+只有 `isReadonly` 和 `target[ReactiveFlags.IS_REACTIVE]` 任意一项或者都为 `false` 时，才返回 `true`
+
+这种情况的代码如下：
+
+```typescript
+// isReadonly = false, target[ReactiveFlags.IS_REACTIVE] = true
+reactive(reactive({}));
+// isReadonly = true, target[ReactiveFlags.IS_REACTIVE] = false
+readonly(readonly({}));
+// isReadonly = false, target[ReactiveFlags.IS_REACTIVE] = false
+reactive(readonly({}));
+```
+
+这三种情况都会返回内层函数的值，但是 `readonly(reactive({}))` 却会继续执行，这是为了 [`isReactive`](#isreactive) 中文档提到的特性
 
 ### 是否存在其对应的响应式代理对象
 
