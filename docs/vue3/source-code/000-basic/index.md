@@ -45,3 +45,38 @@ authors: NoraH1to
 - vue 源码：`v3.2.37`
 
 - 包管理工具 pnpm：`>= 7.5.0`
+
+## 如何调试
+
+- 首先把仓库克隆下来：
+
+  ```shell
+  git clone git@github.com:vuejs/core.git
+  ```
+
+- 进入到项目目录，然后切换到我们的调试版本：
+
+  ```shell
+  cd core
+
+  git checkout v3.2.37
+  ```
+
+- 安装依赖，完整的编译一次：
+
+  ```shell
+  pnpm i
+  # -t 表示同时编译类型文件，-s 表示 sourceMap 文件
+  pnpm build -t -s
+  ```
+
+- 将需要调试的包用开发模式跑起来：
+
+  例如我们要跑 reactivity 这个包，并且是用 vite 调试
+
+  ```shell
+  # -f esm-bundler 表示开发模式打包为 esm 格式，vite 默认会用 module 来编译，所以需要为该格式
+  pnpm dev reactivity -f esm-bundler -s
+  ```
+
+  此时 `packages/reactivity/src` 下的文件都支持实时调试了
