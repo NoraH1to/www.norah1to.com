@@ -126,7 +126,7 @@ if (targetType === TargetType.INVALID) {
 }
 ```
 
-`getTargetType` 函数请查阅本文[其对应小节](#getTargetType)
+`getTargetType` 函数请查阅本文[其对应小节](#gettargettype)
 
 ### 创建响应式对象
 
@@ -258,7 +258,7 @@ export function isReadonly(value: unknown): boolean {
 
 ### toRaw
 
-递归调用获得其原始对象，用于处理例如 [`isReactive`](#isReactive) 中的情况
+递归调用获得其原始对象，用于处理例如 [`isReactive`](#isreactive) 中的情况
 
 ```typescript
 export function toRaw<T>(observed: T): T {

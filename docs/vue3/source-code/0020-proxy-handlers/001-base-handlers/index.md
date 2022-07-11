@@ -116,7 +116,7 @@ if (!isReadonly && targetIsArray && hasOwn(arrayInstrumentations, key)) {
 }
 ```
 
-如果为数组且不为只读，并且读取的是 `vue` 响应式系统需要特殊处理的方法，返回 `vue` 对这些方法的二次封装，详情请看[下一小节](#createArrayInstrumentations)
+如果为数组且不为只读，并且读取的是 `vue` 响应式系统需要特殊处理的方法，返回 `vue` 对这些方法的二次封装，详情请看[下一小节](#createarrayinstrumentations)
 
 最后直接取值
 
