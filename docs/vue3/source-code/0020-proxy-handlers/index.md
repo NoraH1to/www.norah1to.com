@@ -1,5 +1,5 @@
 ---
-title: proxy-handlers
+title: ProxyHandlers
 date: 2022-07-04 17:54:00
 authors: NoraH1to
 tags:
