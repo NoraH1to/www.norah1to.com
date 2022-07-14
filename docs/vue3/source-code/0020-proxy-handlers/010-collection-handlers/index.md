@@ -78,7 +78,7 @@ function createInstrumentationGetter(isReadonly: boolean, shallow: boolean) {
   }
   ```
 
-  没啥好说的，跟 [`baseHandlers`](..//base-handlers/#get) 里逻辑一致
+  没啥好说的，跟 [`baseHandlers`](../base-handlers/#get) 里逻辑一致
 
   这里我貌似发现了个问题，开了个[issue](https://github.com/vuejs/core/issues/6268)
 
