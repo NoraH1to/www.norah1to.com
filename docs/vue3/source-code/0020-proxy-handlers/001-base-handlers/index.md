@@ -8,9 +8,11 @@ tags:
   - 响应式系统
 ---
 
+该文件中的 `handler` 用于处理 `Object`, `Array` 的代理对象
+
 ## mutableHandlers
 
-用于处理 `Object`,`Array` 的代理对象，我们直接跳到其源码处来解读：
+是最主要的实现，上一节 [`reactive`](../../reactive#reactive) 接口的传参之一，我们直接跳到其源码处来解读：
 
 ```typescript
 export const mutableHandlers: ProxyHandler<object> = {
@@ -527,3 +529,9 @@ watchEffect(() => {
 但是数组 `length` 属性又不能不监听，不监听会丢失很多响应性，所以这边处理方法很粗暴：在这些方法**执行前暂停追踪**，**执行后恢复**...
 
 最后返回代理方法的集合
+
+## 其它 handlers
+
+例如 `readonly`, `shallow`, `shallowReadonly` 等等，无非就是限制一些行为
+
+比如 `readonly` 的 `set`, `deleteProperty` 都改为空的实现，`get` 则只是 `createGetter` 工厂方法的传参不同罢了
