@@ -611,3 +611,201 @@ function forEach(
   ```
 
   维持 `forEach` 原来的行为即可，要把 `value` 和 `key` 经过响应式系统处理
+
+## createIterableMethod
+
+然后我们拉到 `createInstrumentations` 实现的下面，会发现还代理了迭代器相关的方法 `keys`, `values`, `entries`：
+
+```typescript
+const iteratorMethods = ['keys', 'values', 'entries', Symbol.iterator];
+iteratorMethods.forEach((method) => {
+  ...
+});
+```
+
+它把这些方法的代理方法通过 `createIterableMethod` 工厂方法构建，并添加到对应的代理合集中：
+
+```typescript
+mutableInstrumentations[method as string] = createIterableMethod(
+  method,
+  false,
+  false
+);
+...
+```
+
+`createIterableMethod` 接收**三个**参数，`method`, `isReadonly`, `isShallow`：
+
+```typescript
+function createIterableMethod(
+  method: string | symbol,
+  isReadonly: boolean,
+  isShallow: boolean
+) {
+  ...
+}
+```
+
+函数返回了一个代理方法：
+
+```typescript
+return function (
+  this: IterableCollections,
+  ...args: unknown[]
+): Iterable & Iterator {
+  ...
+}
+```
+
+来看这个方法的实现：
+
+- 首先获得原始对象和最深层的原始对象：
+
+  ```typescript
+  const target = (this as any)[ReactiveFlags.RAW];
+  const rawTarget = toRaw(target);
+  ```
+
+  跟前面作用一致，处理 `readonly`, `reactive` 套娃的情况
+
+- 判断方法的类型，和处理器类型：
+
+  ```typescript
+  const targetIsMap = isMap(rawTarget);
+  const isPair =
+    method === 'entries' || (method === Symbol.iterator && targetIsMap);
+  const isKeyOnly = method === 'keys' && targetIsMap;
+  const innerIterator = target[method](...args);
+  const wrap = isShallow ? toShallow : isReadonly ? toReadonly : toReactive;
+  ```
+
+  `targetIsMap` 判断是否为 `Map`, `WeakMap`
+
+  `isPair` 判断是否是数组类型的值，`entries` 中回调函数得到的是 `[key, value]`  
+  同时 `Map` 类型的迭代器（`map[Symbol.iterator]`）返回的也是 `entries`
+
+  `isKeyOnly` 判断是否仅为键值，只有 `Map` 有键，`Set.keys()` 与 `Set.values()` 返回的为同一个迭代器
+
+  `innerIterator` 为原始对象上的迭代器
+
+  `wrap` 根据传参决定如何把迭代器访问的值放入响应式系统，跟前面一样
+
+- 不是只读，则追踪迭代器事件：
+
+  ```typescript
+  !isReadonly &&
+    track(
+      rawTarget,
+      TrackOpTypes.ITERATE,
+      isKeyOnly ? MAP_KEY_ITERATE_KEY : ITERATE_KEY
+    );
+  ```
+
+  这里的 `MAP_KEY_ITERATE_KEY` 其实跟 `ITERATE_KEY` 在生产环境下都是空字符串，前面也有很多地方并没有处理这个东西，其实是不用处理的
+
+- 最后返回一个自定义的迭代器：
+
+  ```typescript
+  return {
+    // iterator protocol
+    next() {
+      ...
+    },
+    // iterable protocol
+    [Symbol.iterator]() {
+      return this;
+    },
+  };
+  ```
+
+  `next` 方法大家都知道的，下面详细说
+
+  `Symbol.iterator` 则是为了还原原生迭代器的行为，执行会返回迭代器自身
+
+  其实还有个东西这边没有还原，`Symbol.toStringTag` 这个字段应当是个字符串，表示其自身的迭代器类型，具体作用看 [`MDN文档`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toStringTag)
+
+  例如：
+
+  ```typescript
+  // 值为 "Set Iterator"
+  new Set()[Symbol.iterator]()[Symbol.toStringTag];
+
+  // 会打印 "[object Set Iterator]"
+  console.log(
+    Object.prototype.toString.call(new Set(['a', 'b'])[Symbol.iterator]())
+  );
+  ```
+
+- 迭代器 next 的实现：
+
+  ```typescript
+  next() {
+    const { value, done } = innerIterator.next();
+    return done
+      ? { value, done }
+      : {
+          value: isPair ? [wrap(value[0]), wrap(value[1])] : wrap(value),
+          done,
+        };
+  }
+  ```
+
+  首先从原始迭代器上获得 `next()` 的返回值
+
+  接着就是一连串的条件判断：
+
+  - 如果迭代完成，则直接返回原始值，因为此时 `value` 必定为 `undefined`
+
+  - 否则判断值是否为 `[key, value]` 这样的形式，返回被 `wrap` 处理后的值
+
+## 其它 handlers
+
+只是 `createInstrumentationGetter` 的传参不同，传参不同会使用不同的代理方法
+
+### readonlyInstrumentations
+
+拿 `readonlyInstrumentations` 举例说下：
+
+```typescript
+const readonlyInstrumentations: Record<string, Function> = {
+  get(this: MapTypes, key: unknown) {
+    return get(this, key, true);
+  },
+  get size() {
+    return size(this as unknown as IterableCollections, true);
+  },
+  has(this: MapTypes, key: unknown) {
+    return has.call(this, key, true);
+  },
+  add: createReadonlyMethod(TriggerOpTypes.ADD),
+  set: createReadonlyMethod(TriggerOpTypes.SET),
+  delete: createReadonlyMethod(TriggerOpTypes.DELETE),
+  clear: createReadonlyMethod(TriggerOpTypes.CLEAR),
+  forEach: createForEach(true, false),
+};
+```
+
+可以看到都是用之前说过的工厂方法来构建，又或者是方法传参不同
+
+部分不允许的操作用了 `createReadonlyMethod` 这个工厂方法
+
+### createReadonlyMethod
+
+这个方法实现很简单：
+
+```typescript
+function createReadonlyMethod(type: TriggerOpTypes): Function {
+  return function (this: CollectionTypes, ...args: unknown[]) {
+    if (__DEV__) {
+      const key = args[0] ? `on key "${args[0]}" ` : ``;
+      console.warn(
+        `${capitalize(type)} operation ${key}failed: target is readonly.`,
+        toRaw(this)
+      );
+    }
+    return type === TriggerOpTypes.DELETE ? false : this;
+  };
+}
+```
+
+如果是开发模式，则抛出警告，最后直接返回操作失败的返回值
