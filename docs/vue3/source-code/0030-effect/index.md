@@ -413,7 +413,7 @@ export function track(target: object, type: TrackOpTypes, key: unknown) {
   trackEffects(dep, eventInfo);
   ```
 
-### trackEffect
+### trackEffects
 
 该方法用于将副作用添加到合集中
 
