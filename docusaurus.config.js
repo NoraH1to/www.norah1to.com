@@ -120,6 +120,10 @@ const config = {
             to: '/docs/tags',
           },
           {
+            label: '追番',
+            to: '/bangumi',
+          },
+          {
             href: 'https://github.com/NoraH1to/www.norah1to.com',
             label: '博客仓库',
             position: 'right',
