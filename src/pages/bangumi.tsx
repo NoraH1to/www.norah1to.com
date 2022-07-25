@@ -24,8 +24,12 @@ const CURRENT_DATE = dayjs();
 
 const BangumiContent: FC = () => {
   const { colorMode } = useColorMode();
-  const { data: rawData, loading } = useRequest<BangumiData | null, undefined>(
-    async () => (await fetch(dataSource, { method: 'GET' })).json()
+  const {
+    data: rawData,
+    loading,
+    error,
+  } = useRequest<BangumiData | null, undefined>(async () =>
+    (await fetch(dataSource, { method: 'GET' })).json()
   );
   const [data, setData] = useState(rawData);
   const [originData, setOriginData] = useState(data);
@@ -53,6 +57,45 @@ const BangumiContent: FC = () => {
     setOriginData(newData);
     setData(newData);
   }, [rawData]);
+
+  let content;
+
+  if (error) {
+    content = (
+      <div>
+        <Typography variant='h5' gutterBottom>
+          网络错误
+        </Typography>
+        <Typography variant='body1' color='text.secondary'>
+          数据从
+          <Typography component='code'>raw.githubusercontent.com</Typography>
+          获取，请确保其连通性
+        </Typography>
+      </div>
+    );
+  } else {
+    content = loading ? (
+      <Backdrop open>
+        <CircularProgress />
+      </Backdrop>
+    ) : (
+      <>
+        <div className='margin-bottom--md'>
+          <Typography variant='h4'>番剧时间表</Typography>
+        </div>
+        <div className='margin-bottom--md'>
+          <BangumiFilter />
+        </div>
+        <div>
+          <BangumiList
+            list={data?.items || []}
+            siteMeta={data?.siteMeta || {}}
+          />
+        </div>
+      </>
+    );
+  }
+
   return (
     <ThemeProvider
       theme={createTheme({
@@ -67,26 +110,7 @@ const BangumiContent: FC = () => {
       })}
     >
       <bangumiContext.Provider value={{ originData, data, setData }}>
-        {loading ? (
-          <Backdrop open>
-            <CircularProgress />
-          </Backdrop>
-        ) : (
-          <div className='container margin-vert--md'>
-            <div className='margin-bottom--md'>
-              <Typography variant='h4'>番剧时间表</Typography>
-            </div>
-            <div className='margin-bottom--md'>
-              <BangumiFilter />
-            </div>
-            <div>
-              <BangumiList
-                list={data?.items || []}
-                siteMeta={data?.siteMeta || {}}
-              />
-            </div>
-          </div>
-        )}
+        <div className='container margin-vert--md'>{content}</div>
       </bangumiContext.Provider>
     </ThemeProvider>
   );
