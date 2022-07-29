@@ -258,6 +258,73 @@ class CustomRefImpl<T> {
 
 工厂函数需要返回 `get`,`set` 方法，这两个方法会分别赋给 `_get`,`_set`，用户可以在里面编写**读取、修改 `value` 的逻辑**
 
+## toRef
+
+用于将某个对象上的某个键值转为 `Ref`
+
+但是这边有点特殊，它内部的实现并不是跟 `RefImpl`，而是一个模拟 `Ref` 行为的 [`ObjectRefImpl`](#objectrefimpl)
+
+```typescript
+export function toRef<T extends object, K extends keyof T>(
+  object: T,
+  key: K,
+  defaultValue?: T[K]
+): ToRef<T[K]> {
+  const val = object[key];
+  return isRef(val)
+    ? val
+    : (new ObjectRefImpl(object, key, defaultValue) as any);
+}
+```
+
+如果键值已经是 `ref`，则直接返回，否则用 [`ObjectRefImpl`](#objectrefimpl) 构建
+
+## ObjectRefImpl
+
+构造器的传参与 [`toRef`](#toref) 完全一致
+
+直接看下 `getter` 和 `setter`
+
+- `getter`
+
+  ```typescript
+  class ObjectRefImpl<T extends object, K extends keyof T> {
+    ...
+    get value() {
+      const val = this._object[this._key];
+      return val === undefined ? (this._defaultValue as T[K]) : val;
+    }
+    ...
+  }
+  ```
+
+  直接去取目标对象上对应的键值并返回，如果未定义则返回配置的默认值
+
+- `setter`
+
+  ```typescript
+  class ObjectRefImpl<T extends object, K extends keyof T> {
+    ...
+    set value(newVal) {
+      this._object[this._key] = newVal;
+    }
+  }
+  ```
+
+  直接修改目标对象上对应的键值
+
+可以看到整个过程内部都没有存储 `value` 本身，所以只是模拟了 `Ref` 的行为罢了
+
+因此如果 `toRef` 处理的不是一个 `reactive` 的对象，返回的 `Ref` 并不会是响应式的
+
+```typescript
+const obj = { count: 0 };
+const r = toRef(obj, 'count');
+// 副作用应该执行两次，这里只会执行默认的一次
+effect(() => console.log(r.value));
+r.value++;
+```
+
 ## proxyRefs
 
 我们在编写 `SFC` 组件时，[文档](https://v3.cn.vuejs.org/guide/composition-api-setup.html#%E7%BB%93%E5%90%88%E6%A8%A1%E6%9D%BF%E4%BD%BF%E7%94%A8)中有提到：
@@ -311,6 +378,6 @@ const shallowUnwrapHandlers: ProxyHandler<any> = {
 >
 > 心智负担就体现在这了
 
-## 其它api
+## 其它 api
 
 没啥好说的，如果从前面的文章看到这还读不懂剩下的接口，**我真的会很无语**
