@@ -392,7 +392,7 @@ if (flush === 'sync') {
 
 - 为了实现 `watch`,`watchEffect` 合并多个更新的特性
 
-  这边使用了[事件循环](../../../basic/javascript/event-loop/)的特性来实现，我们如果深入的去看队列的实现会发现 :
+  首先使用了[事件循环](../../../basic/javascript/event-loop/)的特性，我们如果深入的去看队列的实现会发现 :
 
   ```typescript
   function queueFlush() {
@@ -433,6 +433,26 @@ if (flush === 'sync') {
     }
   }
   ```
+
+  最后我们点进 `flushPreFlushCbs` 方法看下实现
+
+  你会惊奇的发现非常的朴实无华：
+
+  ```typescript
+  ...
+  activePreFlushCbs = [...new Set(pendingPreFlushCbs)];
+  for (
+    preFlushIndex = 0;
+    preFlushIndex < activePreFlushCbs.length;
+    preFlushIndex++
+  ) {
+    ...
+    activePreFlushCbs[preFlushIndex]();
+  }
+  ...
+  ```
+
+  简简单单的利用 `Set` 去重，从而达到了合并操作的目的
 
 ### 构建副作用
 
