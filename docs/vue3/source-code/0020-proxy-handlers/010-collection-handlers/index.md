@@ -8,9 +8,9 @@ tags:
   - 响应式系统
 ---
 
-该文件中的 `handler` 用于处理 `Map`, `Set`, `WeakMap`, `WeakSet` 这类 `ES6` 数据结构的代理对象
+该文件中的 `handler` 用于处理 `Map`, `Set`, `WeakMap`, `WeakSet` 这类 ES 标准里合集数据结构的代理对象
 
-这类数据对象都是通过自身的方法来操作数据，所以代理对象只需要在 `get` 监听器中分发需要处理的方法即可
+这类数据对象都是**通过自身的方法操作数据**，代理对象只需要在 `get` 监听器中分发需要处理的方法即可
 
 ## mutableCollectionHandlers
 
@@ -24,7 +24,7 @@ export const mutableCollectionHandlers: ProxyHandler<CollectionTypes> = {
 
 正如上面说的，只监听了 `get` 行为
 
-`createInstrumentationGetter` 是一个工厂方法，用于构建需要代理的方法
+`createInstrumentationGetter` 是一个工厂方法，用于构建**被代理的方法**（e.g. `map.get`,`set.add`）
 
 ## createInstrumentationGetter
 
@@ -38,7 +38,7 @@ function createInstrumentationGetter(isReadonly: boolean, shallow: boolean) {
 
 我们来看里面的实现：
 
-- 首先根据传参决定用哪种方法代理的实现：
+- 首先根据传参决定用方法的哪种代理实现：
 
   ```typescript
   const instrumentations = shallow
@@ -64,7 +64,7 @@ function createInstrumentationGetter(isReadonly: boolean, shallow: boolean) {
   };
   ```
 
-再看看该方法的实现：
+再看看该 `get` 方法的实现：
 
 - 首先处理取各种 flag 的情况：
 
@@ -80,7 +80,7 @@ function createInstrumentationGetter(isReadonly: boolean, shallow: boolean) {
 
   没啥好说的，跟 [`baseHandlers`](../base-handlers/#get) 里逻辑一致
 
-  这里我貌似发现了个问题，开了个[issue](https://github.com/vuejs/core/issues/6268)
+  但是这里取 `RAW` 时的逻辑不一致，导致一些行为上的差异，开了个[issue](https://github.com/vuejs/core/issues/6268)
 
 - 然后判断是否需要代理其属性，返回
 
@@ -96,16 +96,16 @@ function createInstrumentationGetter(isReadonly: boolean, shallow: boolean) {
 
 重点来了家人们
 
-该方法构建了各种情况下的代理方法
+该方法构建了方法不同种类的代理实现
 
 具体有这些：
 
 ```typescript
 const [
-  mutableInstrumentations,
-  readonlyInstrumentations,
-  shallowInstrumentations,
-  shallowReadonlyInstrumentations,
+  mutableInstrumentations, // reactive
+  readonlyInstrumentations, // readonly
+  shallowInstrumentations, // shallow
+  shallowReadonlyInstrumentations, // shallowReadonly
 ] = /* #__PURE__*/ createInstrumentations();
 ```
 
@@ -142,14 +142,16 @@ get(this: MapTypes, key: unknown) {
 }
 ```
 
-其实这是一个 typescript 的特性，函数第一个参数名为 `this` 的类型定义，用来定义当前函数执行上下文中 `this` 的类型，并不是一个外部的参数
+其实这是一个 typescript 的特性，为**第一个参数**、且**参数名为 `this`** 的类型定义，用来定义**当前函数执行上下文中 `this` 的类型**，并不是外部的形参
 
-`vue` 中挺多地方使用了 `this` 但没有检查，所以我们使用 collection 类型的响应式对象时，切记不要使用解构或者下面的代码：
+`vue` 中挺多地方使用了 `this` 但没有检查，所以我们使用 collection 类型的响应式对象时，切记不要下面的代码：
 
 ```typescript
 const map = reactive(new Map());
-const get = map.get;
-get(1); // 会报错
+const getTemp = map.get;
+const { get } = map;
+getTemp(1); // 会报错
+get(1); // 也会报错
 ```
 
 下面来看返回的 `get` 方法的实现，方法接收**四个**参数：
@@ -181,7 +183,7 @@ function get(
 
   然后又获得了其最深层的原始对象（用于处理 `readonly`, `reactive` 套娃的情况）
 
-  最后获得了其 `key` 的原始值（因为 `Map`,`SeT` 可以在 `key` 上放引用类型，可能也是响应式的）
+  最后获得了其 `key` 的原始值（因为 `Map`,`Set` 的 `key` 可以是**引用类型**，可能是**响应式**的）
 
 - 追踪响应式变化：
 
@@ -199,6 +201,16 @@ function get(
   如果 `key` 不等于 `rawKey`，说明 `key` 为响应式的，所以要追踪 `key` 的变化
 
   最后追踪 `rawKey` 本身的变化
+
+  这样做是为了用原始对象传参和响应式对象传参的行为都一致：
+
+  ```typescript
+  const originObj = {};
+  const reactObj = reactive(originObj);
+  const map = reactive(new Map());
+  map.set(originObj, 233);
+  map.get(reactObj); // 233
+  ```
 
 - 把取到的值也加进响应式系统中：
 
@@ -259,7 +271,9 @@ function get(
   map.set(1, 1); // 如果上面的代码去掉，这里 get 后副作用并不会执行
   ```
 
-  这里我也是去掉部分代码后跑测试发现的，测试用例作用不仅是测试，更是方便大家学习的好东西（当然不明所以的用例可能会起到误导作用，这点 vue 做的很好）
+  这里我也是去掉部分代码后跑**测试用例**发现的
+  
+  测试用例作用不仅是测试，更是**方便大家学习**的好东西（这点 vue 做的很好，糟糕的用例甚至会起到误导作用）
 
 ### size
 
@@ -287,7 +301,7 @@ function size(target: IterableCollections, isReadonly = false) {
 
 ### has
 
-`has` 方法是 `Map` 用来判断是否存在 `key` 或者 `Set` 用来判断是否存在 `value` 的方法，方法接收**两个**参数：
+`has` 方法是 `Map` 用来判断是否存在 `key`，或者 `Set` 用来判断是否存在 `value` 的方法，方法接收**两个**参数：
 
 ```typescript
 function has(
